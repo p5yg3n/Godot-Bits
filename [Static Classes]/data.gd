@@ -1,5 +1,4 @@
 class_name Data
-extends RefCounted
 
 const DATA_DIR := "user://data/"
 

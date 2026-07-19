@@ -1,9 +1,15 @@
 class_name State
 extends Node
 
+var state_machine: StateMachine
+
 # Emitted when the state wants to hand over control to another state.
 @warning_ignore("unused_signal")
-signal transitioned(state: State, new_state_name: String)
+signal transitioned(new_state_name: String)
+
+func _ready():
+	set_process(false)
+	set_physics_process(false)
 
 # Called when the state machine enters this state.
 func enter() -> void:
