@@ -1,7 +1,5 @@
+class_name DebugMenu
 extends Node
-
-## Global debug menu (Shift + Right Click)
-## Configured as Autoload singleton
 
 @export var enabled := true
 @export var require_shift := true
@@ -18,8 +16,7 @@ func _ready() -> void:
 	debug_menu.max_size = Vector2(260, 600)
 
 func _input(event: InputEvent) -> void:
-	if not enabled:
-		return
+	if not enabled: return
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		if not require_shift or event.shift_pressed:
@@ -28,6 +25,7 @@ func _input(event: InputEvent) -> void:
 				_show_menu(target)
 				get_viewport().set_input_as_handled()
 
+## Returns the node currently under the mouse position using physics queries.
 func _get_node_under_mouse() -> Node:
 	var space := get_viewport().world_2d.direct_space_state
 	var query := PhysicsPointQueryParameters2D.new()
@@ -38,6 +36,7 @@ func _get_node_under_mouse() -> Node:
 	var results := space.intersect_point(query)
 	return results[0].collider if not results.is_empty() else null
 
+## Displays the context menu for the target node.
 func _show_menu(target: Node) -> void:
 	current_target = target
 	debug_menu.clear()
@@ -53,15 +52,13 @@ func _show_menu(target: Node) -> void:
 		for opt in target.get_debug_options():
 			debug_menu.add_item(opt.label, opt.id)
 
-	# Correct mouse position for PopupMenu
 	var mouse_pos = get_viewport().get_mouse_position()
 	debug_menu.position = (get_viewport().get_screen_transform() * mouse_pos).round() as Vector2i
-
 	debug_menu.popup()
 
+## Handles selection events from the [PopupMenu].
 func _on_item_selected(id: int) -> void:
-	if not is_instance_valid(current_target):
-		return
+	if not is_instance_valid(current_target): return
 
 	if current_target.has_method("execute_debug_action"):
 		current_target.execute_debug_action(id)
@@ -74,24 +71,22 @@ func _on_item_selected(id: int) -> void:
 				print("Position: ", current_target.global_position)
 			if "visible" in current_target:
 				print("Visible: ", current_target.visible)
-
 		1:
 			if "visible" in current_target:
 				current_target.visible = not current_target.visible
-
 		2:
 			print(current_target.get_path())
 			current_target.print_tree()
-
 		3:
 			current_target.queue_free()
 
+## Cleans up target reference when the menu is closed.
 func _on_menu_closed() -> void:
 	current_target = null
 	if debug_menu.has_meta("target"):
 		debug_menu.remove_meta("target")
 
-## Public API
+## Toggles the enabled state of the DebugMenu globally.
 static func toggle_enabled() -> void:
 	var dm := Engine.get_singleton("DebugMenu") as Node
 	if dm:

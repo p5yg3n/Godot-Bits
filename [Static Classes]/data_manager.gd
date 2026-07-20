@@ -1,15 +1,13 @@
 class_name DataManager
 
-## Data Manager - Fast, safe, and reliable save system
-## Configure these to fit your game
 const DIR := "user://data/"
 static var EXT := ".dat"
 
-## Optional AES encryption key (set before use for secure saves)
+## Global encryption key used for secure storage.
 static var encryption_key: String = ""
 
-
-## Saves data with atomic write + optional encryption. Returns true on success.
+## Saves [param data] to a file with atomic write + optional encryption. 
+## Returns true on success.
 static func save(filename: String, data: Dictionary) -> bool:
 	DirAccess.make_dir_recursive_absolute(DIR)
 	var path := DIR.path_join(filename + EXT)
@@ -22,7 +20,7 @@ static func save(filename: String, data: Dictionary) -> bool:
 	
 	var payload := data.duplicate(true)
 	if not encryption_key.is_empty():
-		file.store_var(payload, true)  # compression
+		file.store_var(payload, true) # compression
 		file.close()
 		# Re-open with encryption
 		file = FileAccess.open_encrypted_with_pass(tmp, FileAccess.WRITE, encryption_key)
@@ -34,8 +32,8 @@ static func save(filename: String, data: Dictionary) -> bool:
 	file.close()
 	return DirAccess.rename_absolute(tmp, path) == OK
 
-
-## Loads data. Returns empty dict if missing, corrupted, or wrong type.
+## Loads data from [param filename]. Returns empty dictionary if missing, 
+## corrupted, or of wrong type.
 static func load(filename: String) -> Dictionary:
 	var path := DIR.path_join(filename + EXT)
 	if not FileAccess.file_exists(path):
@@ -50,13 +48,12 @@ static func load(filename: String) -> Dictionary:
 		file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, encryption_key)
 		if not file:
 			push_warning("DataManager: Decryption failed for " + filename)
-			file = FileAccess.open(path, FileAccess.READ)  # fallback
+			file = FileAccess.open(path, FileAccess.READ) # fallback
 	
 	var data = file.get_var(true)
 	return data if data is Dictionary else {}
 
-
-## Returns list of save basenames (without extension)
+## Returns list of save basenames without file extensions.
 static func list_saves() -> Array[String]:
 	var dir := DirAccess.open(DIR)
 	if not dir: return []
@@ -65,18 +62,15 @@ static func list_saves() -> Array[String]:
 		.filter(func(f): return f.ends_with(EXT)) \
 		.map(func(f): return f.get_basename())
 
-
-## Deletes a save file
+## Deletes the save file associated with [param filename].
 static func delete(filename: String) -> bool:
 	return DirAccess.remove_absolute(DIR.path_join(filename + EXT)) == OK
 
-
-## Quick existence check
+## Returns true if the save file exists.
 static func exists(filename: String) -> bool:
 	return FileAccess.file_exists(DIR.path_join(filename + EXT))
 
-
-## Get the most recent save (by modification time)
+## Returns the basename of the most recently modified save file.
 static func get_latest() -> String:
 	var files := list_saves()
 	if files.is_empty(): return ""
